@@ -1,0 +1,18 @@
+{
+  "bsc-testnet": {
+    "startMintId": 5,
+    "endMintId": 6
+  },
+  "optimism-goerli": {
+    "startMintId": 3,
+    "endMintId": 4
+  },
+  "goerli": {
+    "startMintId": 7,
+    "endMintId": 8
+  },
+  "arbitrum-goerli": {
+    "startMintId": 1,
+    "endMintId": 2
+  }
+}
