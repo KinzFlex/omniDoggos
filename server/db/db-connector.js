@@ -4,7 +4,7 @@ const { Client } = require("pg");
 const client = new Client({
   user: process.env.DB_USER || "postgres",
   host: "localhost",
-  database: process.env.DB_NAME || "SQUEEZE_DB",
+  database: process.env.DB_NAME || "DOGGOS_DB",
   password: process.env.DB_PW,
   port: 5432,
 });

@@ -1,7 +1,7 @@
 const express = require("express");
 const cron = require("node-cron");
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 const CONTRACT = require("./scripts/contract-connector");
 
 app.use(function timeLog(req, res, next) {
