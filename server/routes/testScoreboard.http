@@ -1,0 +1,11 @@
+### Get All Scores from Scoreboard
+GET http://localhost:3001/api/scoreboard/all
+Content-Type: application/json
+
+### Get my Rank
+GET http://localhost:3001/api/scoreboard/myRank/1
+Content-Type: application/json
+
+### Get my Rank with error
+GET http://localhost:3001/api/scoreboard/myRank/-1
+Content-Type: application/json

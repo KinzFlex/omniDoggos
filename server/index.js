@@ -15,7 +15,7 @@ app.use(function timeLog(req, res, next) {
 
 app.use(express.static("public"));
 
-//app.use("/api/scoreboard", require("./routes/scoreboard"));
+app.use("/api/scoreboard", require("./routes/scoreboard"));
 
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
 //cron.schedule("* * * * *", () => {

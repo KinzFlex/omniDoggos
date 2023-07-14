@@ -11,19 +11,44 @@ const client = new Client({
 client.connect();
 
 module.exports = {
-  getAll() {
+  /**
+   * Retrieves the scoreboard from the database.
+   *
+   * @return {Promise<Array>} An array of objects representing the scoreboard
+   * with properties "addr" (address), "score", and "rankChange".
+   */
+  getScoreboard() {
     return new Promise((resolve, reject) => {
       client
-        .query('SELECT * FROM "SCOREBOARD_TABLE" ORDER BY "score" desc')
+        .query(
+          'SELECT "addr", "score", "rankChange" FROM "SCORE_TABLE" ORDER BY "score" desc'
+        )
         .then((results) => {
           resolve(results.rows);
         });
     });
   },
+
+  getMyScoreAndCalculateRank(addr) {
+    return new Promise((resolve, reject) => {
+      this.getScoreboard().then((scores) => {
+        const index = scores.findIndex((score) => score.addr === addr);
+        if (index === -1) {
+          reject("Address not found");
+          return;
+        }
+        const myScore = scores[index];
+
+        myScore.rank = index + 1;
+        resolve(myScore);
+      });
+    });
+  },
+
   /**
    * Fetch score of current holder from db and add new score and save it
    */
-  addScoreToHolder(sAddressOfHolder, iNewScoreToAdd) {
+  /*   addScoreToHolder(sAddressOfHolder, iNewScoreToAdd) {
     client.query('UPDATE "SCOREBOARD_TABLE" SET "active"=FALSE').then(() => {
       client
         .query('SELECT * FROM "SCOREBOARD_TABLE" WHERE "address" = $1', [
@@ -49,5 +74,5 @@ module.exports = {
           }
         });
     });
-  },
+  }, */
 };
