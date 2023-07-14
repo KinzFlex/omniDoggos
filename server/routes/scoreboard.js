@@ -17,7 +17,7 @@ router.get("/myRank/:addr", (req, res) => {
     },
     (error) => {
       console.error(error);
-      res.status(404).send(error);
+      res.status(error.code).send(error.msg);
     }
   );
 });
