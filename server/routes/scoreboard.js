@@ -4,9 +4,15 @@ var dbConnector = require("../db/db-connector");
 
 // Returns scoreboard
 router.get("/all", (req, res) => {
-  dbConnector.getScoreboard().then((response) => {
-    res.json(response);
-  });
+  dbConnector.getScoreboard().then(
+    (response) => {
+      res.json(response);
+    },
+    (error) => {
+      console.error(error);
+      res.status(error.code).send(error.msg);
+    }
+  );
 });
 
 router.get("/myRank/:addr", (req, res) => {

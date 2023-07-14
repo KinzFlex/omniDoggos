@@ -17,75 +17,38 @@ module.exports = {
    * @return {Promise<Array>} An array of objects representing the scoreboard
    * with properties "addr" (address), "score", and "rankChange".
    */
-  getScoreboard() {
-    return new Promise((resolve, reject) => {
-      client
-        .query(
-          'SELECT "addr", "score", "rankChange" FROM "SCORE_TABLE" ORDER BY "score" desc'
-        )
-        .then(
-          (results) => {
-            resolve(results.rows);
-          },
-          (error) => {
-            reject({ msg: error, code: 500 });
-          }
-        );
-    });
-  },
-
-  getMyScoreAndCalculateRank(addr) {
-    return new Promise((resolve, reject) => {
-      this.getScoreboard().then(
-        (scores) => {
-          try {
-            const index = scores.findIndex((score) => score.addr === addr);
-            if (index === -1) {
-              reject({ msg: "Address not found", code: 404 });
-              return;
-            }
-            const myScore = scores[index];
-            myScore.rank = index + 1;
-            resolve(myScore);
-          } catch (error) {
-            reject({ msg: error, code: 500 });
-          }
-        },
-        (error) => {
-          reject({ msg: error, code: 500 });
-        }
+  async getScoreboard() {
+    try {
+      const results = await client.query(
+        'SELECT "addr", "score", "rankChange" FROM "SCORE_TABLE" ORDER BY "score" desc'
       );
-    });
+      return results.rows;
+    } catch (error) {
+      throw { msg: error, code: 500 };
+    }
   },
 
   /**
-   * Fetch score of current holder from db and add new score and save it
+   * Retrieves the score of a player at a given address and calculates their rank.
+   *
+   * @param {string} addr - The address of the player.
+   * @return {Promise} A promise that resolves with an object containing the player's score and rank.
    */
-  /*   addScoreToHolder(sAddressOfHolder, iNewScoreToAdd) {
-    client.query('UPDATE "SCOREBOARD_TABLE" SET "active"=FALSE').then(() => {
-      client
-        .query('SELECT * FROM "SCOREBOARD_TABLE" WHERE "address" = $1', [
-          sAddressOfHolder,
-        ])
-        .then((results) => {
-          switch (results.rows.length) {
-            case 0: // Insert
-              client.query(
-                'INSERT INTO "SCOREBOARD_TABLE"("address","score") VALUES($1,$2)',
-                [sAddressOfHolder, iNewScoreToAdd]
-              );
-              break;
-
-            case 1: // Update
-              const iOldScore = results.rows[0].score;
-              iNewScoreToAdd += iOldScore;
-              client.query(
-                'UPDATE "SCOREBOARD_TABLE" SET "score"=$2,"active"=TRUE WHERE "address"=$1',
-                [sAddressOfHolder, iNewScoreToAdd]
-              );
-              break;
-          }
-        });
-    });
-  }, */
+  async getMyScoreAndCalculateRank(addr) {
+    try {
+      const scores = await this.getScoreboard();
+      const index = scores.findIndex((score) => score.addr === addr);
+      if (index === -1) {
+        throw { message: "Address not found", code: 404 };
+      }
+      const myScore = scores[index];
+      myScore.rank = index + 1;
+      return myScore;
+    } catch (error) {
+      throw {
+        msg: error.message,
+        code: error.code ? error.code : 500,
+      };
+    }
+  },
 };
