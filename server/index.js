@@ -3,6 +3,7 @@ const cron = require("node-cron");
 const app = express();
 const PORT = 3001;
 const CONTRACT = require("./scripts/contract-connector");
+const routines = require("./scripts/routines");
 
 app.use(function timeLog(req, res, next) {
   console.log(
@@ -18,12 +19,15 @@ app.use(express.static("public"));
 app.use("/api/scoreboard", require("./routes/scoreboard"));
 
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
-//cron.schedule("* * * * *", () => {
-// For quicker testing
-/*cron.schedule("0 4 * * *", () => {
-  // 4 uhr nachts
+
+cron.schedule("0 4 * * *", () => {
+  //TODO check and update new Scores before further execution
   console.log(
-    `Fetching new scoreboard data at ${new Date().toLocaleTimeString()}`
+    `Executing calculateScoreChange() at ${new Date().toLocaleTimeString()}`
   );
-  CONTRACT.fetchHoldersFromContract();
-});*/
+  try {
+    routines.calculateScoreChange();
+  } catch (error) {
+    console.error(error);
+  }
+});

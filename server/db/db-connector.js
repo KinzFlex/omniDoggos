@@ -36,7 +36,7 @@ module.exports = {
    */
   async getMyScoreAndCalculateRank(addr) {
     try {
-      const scores = await this.getScoreboard();
+      const scores = await this.getScoreboard("score");
       const index = scores.findIndex((score) => score.addr === addr);
       if (index === -1) {
         throw { message: "Address not found", code: 404 };
@@ -49,6 +49,17 @@ module.exports = {
         msg: error.message,
         code: error.code ? error.code : 500,
       };
+    }
+  },
+
+  async updateRankChangeByAddr(addr, rankChange, newScore) {
+    try {
+      await client.query(
+        'UPDATE "SCORE_TABLE" SET "rankChange" = $1, "oldScore" = $3 WHERE "addr" = $2',
+        [rankChange, addr, newScore]
+      );
+    } catch (error) {
+      throw { msg: error, code: 500 };
     }
   },
 };
