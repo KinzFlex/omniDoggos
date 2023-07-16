@@ -2,6 +2,10 @@
 GET http://localhost:3001/api/scoreboard/all
 Content-Type: application/json
 
+### Get All Scores from Scoreboard sorted by oldScore
+GET http://localhost:3001/api/scoreboard/all?sortBy=oldScore
+Content-Type: application/json
+
 ### Get my Rank
 GET http://localhost:3001/api/scoreboard/myRank/1
 Content-Type: application/json

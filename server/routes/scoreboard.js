@@ -4,7 +4,8 @@ var dbConnector = require("../db/db-connector");
 
 // Returns scoreboard
 router.get("/all", (req, res) => {
-  dbConnector.getScoreboard().then(
+  const sSortBy = req.query.sortBy ? req.query.sortBy : "score";
+  dbConnector.getScoreboard(sSortBy).then(
     (response) => {
       res.json(response);
     },

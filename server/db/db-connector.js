@@ -17,10 +17,10 @@ module.exports = {
    * @return {Promise<Array>} An array of objects representing the scoreboard
    * with properties "addr" (address), "score", and "rankChange".
    */
-  async getScoreboard() {
+  async getScoreboard(sortBy) {
     try {
       const results = await client.query(
-        'SELECT "addr", "score", "rankChange" FROM "SCORE_TABLE" ORDER BY "score" desc'
+        `SELECT "addr", "score", "rankChange" FROM "SCORE_TABLE" ORDER BY "${sortBy}" desc`
       );
       return results.rows;
     } catch (error) {
