@@ -19,13 +19,16 @@
 
 ## Smart Contract Deployment:
 
-1. The smart contract file is in the contracts folder "mintContract.sol".
+1. The smart contract file is in the contracts folder "omniDoggos.sol".
 2. After changes in the smart contract the contract has do be newly deployed and can not be updated.
-3. To deploy the contract use:
-   npx hardhat run scripts/deploy.js --network localhost
-4. If successful we get an address in the terminal.
-5. That address has to be pasted into the context/constants.js file.
-6. If changes have be made to the smart contract we havee to replace the old mintContract.json file in the context folder with the newly created contract file in artifacts/contracts/mintContract.sol.
+3. We have to deploy 2 contracts minimum to test the omnichain features. To deploy the contract use:
+   npx hardhat --network arbitrum-goerli deploy --tags omniDoggos or  npx hardhat --network goerli deploy --tags omniDoggos or ...
+4. We have to set the allowances in both contracts to interact with each other:
+   npx hardhat --network goerli setTrustedRemote --target-network arbitrum-goerli --contract omniDoggos
+   and vice versa
+5. We have to set the Minimum Gas for the Destination Chain so the tokens can arrive on this chain
+   npx hardhat --network goerli setMinDstGas --target-network arbitrum-goerli --contract omniDoggos --packet-type 1 --min-gas 100000
+   and vice versa
 
 ### Common Errors:
 
