@@ -23,10 +23,10 @@ app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
 cron.schedule("0 4 * * *", () => {
   //TODO check and update new Scores before further execution
   console.log(
-    `Executing calculateScoreChange() at ${new Date().toLocaleTimeString()}`
+    `Executing calculateRankChange() at ${new Date().toLocaleTimeString()}`
   );
   try {
-    routines.calculateScoreChange();
+    routines.calculateRankChange();
   } catch (error) {
     console.error(error);
   }

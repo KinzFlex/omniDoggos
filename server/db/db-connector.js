@@ -62,4 +62,108 @@ module.exports = {
       throw { msg: error, code: 500 };
     }
   },
+
+  async updateScoreByAddr(addr, newScore) {
+    try {
+      await client.query(
+        'UPDATE "SCORE_TABLE" SET "score" = $1 WHERE "addr" = $2',
+        [newScore, addr]
+      );
+    } catch (error) {
+      throw { msg: error, code: 500 };
+    }
+  },
+  async updateChainCheckByNFT_ID(id, chainName) {
+    try {
+      await client.query(
+        `UPDATE "NFT_TABLE" SET "${chainName}" = TRUE WHERE "id" = $2`,
+        [chainName, id]
+      );
+    } catch (error) {
+      throw { msg: error, code: 500 };
+    }
+  },
+
+  async getScoreAndBonusOfNFTByID(id) {
+    try {
+      const results = await client.query(
+        `SELECT "baseScore","bonus" FROM "NFT_TABLE" WHERE "id" = $2`,
+        [id]
+      );
+      return results.rows[0];
+    } catch (error) {
+      throw { msg: error, code: 500 };
+    }
+  },
+
+  async calculateBonusOfNftById(id) {
+    try {
+      // Retrieve data from the database
+      const query = `
+      SELECT "chainBSC", "chainETH", "chainARB", "chainOPT", "roundsCompleted"
+      FROM "NFT_TABLE"
+      WHERE "id" = $1
+    `;
+      const results = await client.query(query, [id]);
+
+      let { chainBSC, chainETH, chainARB, chainOPT, roundsCompleted } =
+        results.rows[0];
+
+      // Calculate the number of checked chains
+      let countCheckedChains = [chainBSC, chainETH, chainARB, chainOPT].filter(
+        (val) => val === true
+      ).length;
+
+      if (chainBSC && chainETH && chainARB && chainOPT) {
+        // Increment rounds completed and reset count of checked chains
+        roundsCompleted += 1;
+        countCheckedChains = 0;
+
+        // Update the database with the new values
+        const updateQuery = `
+        UPDATE "NFT_TABLE"
+        SET "roundsCompleted" = $1,
+            "chainBSC" = FALSE,
+            "chainETH" = FALSE,
+            "chainARB" = FALSE,
+            "chainOPT" = FALSE
+        WHERE "id" = $2
+      `;
+        await client.query(updateQuery, [roundsCompleted, id]);
+      }
+
+      // Calculate the bonus
+      const bonusResults = this.calculateBonus(roundsCompleted);
+      let totalBonus =
+        bonusResults.totalBonus +
+        bonusResults.bonusMultiplier * countCheckedChains;
+
+      // Update the database with the calculated bonus
+      await client.query(
+        `
+        UPDATE "NFT_TABLE"
+        SET "bonus" = $1
+        WHERE "id" = $2
+      `,
+        [totalBonus, id]
+      );
+    } catch (error) {
+      // Handle error here
+    }
+  },
+
+  calculateBonus(roundsCompleted) {
+    let totalBonus = 0;
+    let bonusMultiplier = 1;
+
+    for (let round = 1; round <= roundsCompleted; round++) {
+      bonusMultiplier /= 2;
+      totalBonus += bonusMultiplier;
+    }
+
+    bonusMultiplier /= 2;
+    bonusMultiplier /= 5;
+
+    return { totalBonus, bonusMultiplier };
+  },
 };

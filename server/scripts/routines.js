@@ -1,8 +1,13 @@
 require("dotenv").config();
 var dbConnector = require("../db/db-connector");
+const ARBITRUM_WORKER = require("./contract-connector");
+ARBITRUM_WORKER.initContract(
+  process.env.ARBITRUM_URL,
+  process.env.ARBITRUM_ADDRESS
+);
 
 module.exports = {
-  async calculateScoreChange() {
+  async calculateRankChange() {
     const newScores = await dbConnector.getScoreboard("score");
     const oldScores = await dbConnector.getScoreboard("oldScore");
 
@@ -22,5 +27,12 @@ module.exports = {
         console.error(error);
       }
     }
+  },
+
+  async calculateNewScore() {
+    // fetch allAddrAndNFTIDs from contract
+    // check new chain -> rise bonus
+    //save new score of addr locally
+    // update scoreboard
   },
 };
