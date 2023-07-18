@@ -20,7 +20,19 @@ app.use("/api/scoreboard", require("./routes/scoreboard"));
 
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
 
+// TEST
+
+routines.calculateNewBonusScore();
+
 cron.schedule("0 4 * * *", () => {
+  console.log(
+    `Executing calculateNewBonusScore() at ${new Date().toLocaleTimeString()}`
+  );
+  try {
+    routines.calculateNewBonusScore();
+  } catch (error) {
+    console.error(error);
+  }
   //TODO check and update new Scores before further execution
   console.log(
     `Executing calculateRankChange() at ${new Date().toLocaleTimeString()}`

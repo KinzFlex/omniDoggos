@@ -28,6 +28,17 @@ module.exports = {
     }
   },
 
+  async getAllNftIds() {
+    try {
+      const results = await client.query(
+        `SELECT "id" FROM "NFT_TABLE" ORDER BY "id" asc`
+      );
+      return results.rows;
+    } catch (error) {
+      throw { msg: error, code: 500 };
+    }
+  },
+
   /**
    * Retrieves the score of a player at a given address and calculates their rank.
    *
@@ -98,8 +109,8 @@ module.exports = {
   async updateChainCheckByNftId(id, chainName) {
     try {
       await client.query(
-        `UPDATE "NFT_TABLE" SET "${chainName}" = TRUE WHERE "id" = $2`,
-        [chainName, id]
+        `UPDATE "NFT_TABLE" SET "${chainName}" = TRUE WHERE "id" = $1`,
+        [id]
       );
     } catch (error) {
       throw { msg: error, code: 500 };
@@ -133,21 +144,27 @@ module.exports = {
     try {
       // Retrieve data from the database
       const query = `
-      SELECT "chainBSC", "chainETH", "chainARB", "chainOPT", "roundsCompleted"
+      SELECT "baseScore","chainBSC", "chainETH", "chainARB", "chainOPT", "roundsCompleted" 
       FROM "NFT_TABLE"
       WHERE "id" = $1
     `;
       const results = await client.query(query, [id]);
 
-      let { chainBSC, chainETH, chainARB, chainOPT, roundsCompleted } =
-        results.rows[0];
+      let {
+        baseScore,
+        chainBSC,
+        chainETH,
+        chainARB,
+        chainOPT,
+        roundsCompleted,
+      } = results.rows[0];
 
       // Calculate the number of checked chains
       let countCheckedChains = [chainBSC, chainETH, chainARB, chainOPT].filter(
         (val) => val === true
       ).length;
 
-      if (chainBSC && chainETH && chainARB && chainOPT) {
+      if (countCheckedChains === 4) {
         // Increment rounds completed and reset count of checked chains
         roundsCompleted += 1;
         countCheckedChains = 0;
@@ -180,6 +197,7 @@ module.exports = {
       `,
         [totalBonus, id]
       );
+      return parseInt((totalBonus + 1) * baseScore);
     } catch (error) {
       // Handle error here
     }
