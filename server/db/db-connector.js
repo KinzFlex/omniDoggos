@@ -52,6 +52,14 @@ module.exports = {
     }
   },
 
+  /**
+   * Updates the rank change and old score for a given address in the SCORE_TABLE.
+   *
+   * @param {string} addr - The address to update.
+   * @param {number} rankChange - The new rank change value.
+   * @param {number} newScore - The new score value.
+   * @return {Promise<void>} - Resolves when the update is complete.
+   */
   async updateRankChangeByAddr(addr, rankChange, newScore) {
     try {
       await client.query(
@@ -63,6 +71,13 @@ module.exports = {
     }
   },
 
+  /**
+   * Updates the score for a given address in the "SCORE_TABLE" table.
+   *
+   * @param {string} addr - The address to update the score for.
+   * @param {number} newScore - The new score value to update.
+   * @throws {object} - An object with the error message and error code.
+   */
   async updateScoreByAddr(addr, newScore) {
     try {
       await client.query(
@@ -73,7 +88,14 @@ module.exports = {
       throw { msg: error, code: 500 };
     }
   },
-  async updateChainCheckByNFT_ID(id, chainName) {
+  /**
+   * Updates the chain check status for a specific NFT ID.
+   *
+   * @param {number} id - The ID of the NFT.
+   * @param {string} chainName - The name of the chain.
+   * @return {Promise<void>} - A Promise that resolves with no value.
+   */
+  async updateChainCheckByNftId(id, chainName) {
     try {
       await client.query(
         `UPDATE "NFT_TABLE" SET "${chainName}" = TRUE WHERE "id" = $2`,
@@ -84,7 +106,13 @@ module.exports = {
     }
   },
 
-  async getScoreAndBonusOfNFTByID(id) {
+  /**
+   * Retrieves the base score and bonus of an NFT by its ID.
+   *
+   * @param {number} id - The ID of the NFT.
+   * @return {object} The score and bonus of the NFT.
+   */
+  async getScoreAndBonusOfNftByID(id) {
     try {
       const results = await client.query(
         `SELECT "baseScore","bonus" FROM "NFT_TABLE" WHERE "id" = $2`,
@@ -96,6 +124,11 @@ module.exports = {
     }
   },
 
+  /**
+   * Asynchronously calculates the bonus of an NFT by its ID.
+   *
+   * @param {number} id - The ID of the NFT.
+   */
   async calculateBonusOfNftById(id) {
     try {
       // Retrieve data from the database
@@ -152,6 +185,12 @@ module.exports = {
     }
   },
 
+  /**
+   * Calculate the bonus based on the number of completed rounds.
+   *
+   * @param {number} roundsCompleted - The number of rounds completed.
+   * @return {object} An object containing the total bonus and bonus multiplier.
+   */
   calculateBonus(roundsCompleted) {
     let totalBonus = 0;
     let bonusMultiplier = 1;
