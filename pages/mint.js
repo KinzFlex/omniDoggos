@@ -16,91 +16,96 @@ import Image from "next/image";
 import images from "../assets";
 import LoadingAnimation from "../components/Loading";
 import ConfirmationMintedNFT from "../components/ConfirmationMintedNFT";
+import NetworkDropdown from "../components/NetworkDropdown";
 
 function MintNFT() {
   const {
     payToMint,
-    getUri,
+    onftSend,
     getAmtMinted,
-    getContract,
     getMintRate,
-    getStage,
     getTokensOfOwner,
-    currentContract,
     currentAccount,
+    currentContract,
+    getContract,
+    getMintedTokenOfOwner,
+    getUriImage, 
+    currentNetwork,
     isWalletConnected,
-    connectWallet,
-    onftSend
+    getTokenId
   } = useContext(NFTContext);
+
+  const ImageURIs = [];
+  const [ImageUri, setImageUri] = useState([]);
   const [amtMinted, setAmtMinted] = useState(0);
   const [mintRate, setMintRate] = useState(0.1);
-  const [stage, setStage] = useState("locked");
-  const [amountToMint, setAmountToMint] = useState(1);
-  const { theme } = useTheme();
-  const [hideButtons, setHideButtons] = useState(false);
+  const [showNetworkPopup, setShowNetworkPopup] = useState(false);
+  const [networksToSend, setNetworksToSend] = useState([]);
+  const [token, setTokenId] = useState(0);
+  const tokenIdArray_ = [];
+  const [tokenIdArray, setTokenIdArray] = useState([]);
 
   const state = useStore()[0];
-
-  const scrollRef = useRef(null);
-  const parentRef = useRef(null);
 
   const onMintNFT = async () => {
     await payToMint();
   };
+ 
+  const togglePopup = () => {
+    setIsOpen(!isOpen);
+  };
 
-  const onSendNFT = async () => {
-    await onftSend();
+  const handleSendButtonClick = (tokenId_) => {
+    console.log(tokenId_)
+    setTokenId(tokenId_);
+    if(showNetworkPopup == false) {
+      setShowNetworkPopup(true);
+    }
+    else {
+      setShowNetworkPopup(false);
+    }
+      
+  };
+  
+  const showOwnerNftImages = async () => {
+    const tokens = await getTokensOfOwner();
+    console.log(tokens)
+    if (tokens > 0) {
+      // console.log(tokens)
+      const tokenArray = await getMintedTokenOfOwner();
+      for (let i = 1; i <= tokens; i++) {
+        const uri_ = await getUriImage(i);
+        const id = await getTokenId(i)
+        ImageURIs.push(uri_);
+        tokenIdArray_.push(id)
+      }
+      setImageUri(ImageURIs);
+      setTokenIdArray(tokenIdArray_);
+    }
+
   };
 
   const updateMint = async () => {
-    if (currentAccount && currentContract) {
-      const amtMinted_ = await getAmtMinted();
-      setAmtMinted(amtMinted_.toString());
-      const rate = await getMintRate();
-      setMintRate(rate.toString());
-    }
+    const amtMinted_ = await getAmtMinted();
+    setAmtMinted(amtMinted_);
+    const rate = await getMintRate();
+    setMintRate(rate.toString()); 
   };
 
-  function handleTokenInput(event) {
-    setAmountToMint(event.target.value);
-  }
-
-  // check if scrollRef container is overfilling its parentRef container
-  const isScrollable = () => {
-    const { current } = scrollRef;
-    const { current: parent } = parentRef;
-    if (current?.scrollWidth >= parent?.offsetWidth)
-      return setHideButtons(false);
-    return setHideButtons(true);
-  };
-
-  useEffect(async () => {
-    await updateMint();
-    isScrollable();
-    window.addEventListener("resize", isScrollable);
-    return () => {
-      window.removeEventListener("resize", isScrollable);
-    };
+  useEffect(() => {
+    isWalletConnected()
+      .then(() => {
+        updateMint();
+        showOwnerNftImages();
+    })
+    
   }, []);
-
-  const handleScroll = (direction) => {
-    const { current } = scrollRef;
-
-    const scrollAmount = window.innerWidth > 1800 ? 270 : 210;
-
-    if (direction === "left") {
-      current.scrollLeft -= scrollAmount;
-    } else {
-      current.scrollLeft += scrollAmount;
-    }
-  };
 
   const reportError = (error) => {
     console.log(error.message);
     throw new Error("No ethereum object.");
   };
 
-  //const tokenURIs = showOwnerNfts();
   return (
     <div className="flex-col flex justify-center px-20 sm:px-2 p-8">
       {state.showLoadingAnimation && <LoadingAnimation />}
@@ -112,7 +117,7 @@ function MintNFT() {
             <div className="flex-col py-20 p-20 md:w-full">
               <div className="relative">
                 <MintDetails
-                  minted={amtMinted}
+                  minted={amtMinted.toString()}
                   mintRate={mintRate}
                 />
               </div>
@@ -123,101 +128,48 @@ function MintNFT() {
                 classStyles="rounded-xl"
                 handleClick={onMintNFT}
               />
-              <Button
-                btnName="Send"
-                btnType="primary"
-                classStyles="rounded-xl"
-                handleClick={onSendNFT}
-              />
-            </div>
 
-            {/* <div className="p-20">
-              <div className="absolute top-1000 right-40 left-10">
-                <Image
-                  src={images.Schrei}
-                  width={130}
-                  height={200}
-                  layout="fixed"
-                  className="rounded-full mr-4"
-                />
-              </div>
-              <h2 className="text-center text-4xl font-bold text-gray-100">
-                Take a look!
-              </h2>
             </div>
-
-            <div className="relative max-w-full flex">
-              <div
-                className="items-center relative max-w-full flex py-20 rounded-xl nft-gradient2"
-                ref={parentRef}
-              >
-                <div
-                  className="flex flex-row w-max overflow-x-scroll no-scrollbar select-none"
-                  ref={scrollRef}
-                >
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div
-                      className="overflow-hidden flex-shrink-0"
+            <div className="mt-3 w-full flex flex-wrap justify-center md:justify-center">
+              {ImageUri?.map(
+                (uri, i) => (
+                  <div className="flex-col py-20 p-20 md:w-full">
+                    <OwnerNfts
+                      name={`OD# ${tokenIdArray[i]}`}
+                      image={uri}
+                      onClick_={() => togglePopup()}
                       key={i}
-                      style={{
-                        width: "50vw",
-                        maxWidth: "800px",
-                        height: "30vh",
-                        maxHeight: "600px",
-                      }}
-                    >
-                      <div className="flex-1 min-w-215 max-w-max xs:max-w-none sm:w-full sm:min-w-155 minmd:min-w-256 minlg:min-w-327 dark:bg-nft-black-3 bg-white rounded-2xl p-4 m-4 minlg:m-8 sm:my-2 sm:mx-2 cursor-pointer shadow-md">
-                        <div className="relative w-full h-60 overflow-hidden">
-                          <ReactPlayer
-                            url={`https://ipfs.io/ipfs/QmPJhWibtmRYzmSZu1kxti7cUqH1TdXmKB5MGNoRv7s5ur/${i}.mp4`}
-                            loop={true}
-                            playing={true}
-                            width="100%"
-                            height="100%"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    />
 
-                  {!hideButtons && (
-                    <>
-                      <div
-                        onClick={() => handleScroll("left")}
-                        className="absolute w-16 h-16 minlg:w-12 minlg:h-12 top-45 cursor-pointer left-0"
-                      >
-                        <Image
-                          src={images.left}
-                          layout="fill"
-                          objectFit="contain"
-                          alt="left_arrow"
-                          className={
-                            theme === "light" ? "filter invert" : undefined
-                          }
-                        />
-                      </div>
-                      <div
-                        onClick={() => handleScroll("right")}
-                        className="absolute w-16 h-16 minlg:w-12 minlg:h-12 top-45 cursor-pointer right-0"
-                      >
-                        <Image
-                          src={images.right}
-                          layout="fill"
-                          objectFit="contain"
-                          alt="left_arrow"
-                          className={
-                            theme === "light" ? "filter invert" : undefined
-                          }
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div> */}
+                    <Button
+                      btnName="Send"
+                      btnType="primary"
+                      classStyles="rounded-xl"
+                      handleClick={() => handleSendButtonClick(tokenIdArray[i])}
+                      //handleClick={onSendNFT}
+                    />
+                  </div>
+                )
+
+                // <div
+                //   className="bg-blue-500 text-white px-4 py-2 rounded-md cursor-pointer"
+
+                // ></div>
+              )}
+            </div>
+
           </div>
         </div>
       </div>
+      {showNetworkPopup && (
+        <div className={`top-0 left-0 w-screen h-screen flex items-center justify-center bg-black bg-opacity-50 transform transition-transformduration-300 overlay__background`}>
+          <NetworkDropdown
+            tokenId={token} 
+            networkId={currentNetwork}
+          />
+          
+        </div>
+      )}
     </div>
   );
 }

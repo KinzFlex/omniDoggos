@@ -2,10 +2,11 @@ import React, {useContext, useState, useEffect} from 'react';
 import Image from 'next/image';
 import { NFTContext } from "../context/NFTContext";
 import { useStore } from "../hooks/Hook";
+import { OwnerNfts } from '.';
 
 const ConfirmationMintedNFT = ({ onClick_, image,}) => {
     const {
-        getNewMintedTokenOfOwner,
+        getMintedTokenOfOwner,
         getUriImage
       } = useContext(NFTContext);
     const ImageURIs = [];
@@ -22,7 +23,8 @@ const ConfirmationMintedNFT = ({ onClick_, image,}) => {
   };
 
   const showOwnerNftImage = async () => {
-    const tokens = await getNewMintedTokenOfOwner();
+    const tokens = await getMintedTokenOfOwner();
+    console.log(tokens)
     setTokenNumber(tokens);
     const uri = await getUriImage(tokens);
     ImageURIs.push(uri);
@@ -49,13 +51,17 @@ const ConfirmationMintedNFT = ({ onClick_, image,}) => {
       <div className="flex flex-row justify-center items-center">
         
         <div className="fixed inset-0 z-10 flex justify-center items-center" />
-        {ImageUri?.map((uri) => 
-        <div>
-            <Image src={uri} height={400}
-          width={400} objectFit="cover"/>
-        <p className="font-poppins dark:text-white text-nft-black-1 font-semibold text-sm minlg:text-xl">{`SQ ${TokenNumber}`}</p>
-        </div>
-          )}
+        {ImageUri?.map((uri, i) => (
+                    <div className="flex-col py-20 p-20 md:w-full">
+                      <OwnerNfts
+                        name={`OD# ${amtMinted + i + 1}`}
+                        image={uri}
+                        onClick_={() => togglePopup(i)}
+                        key={i}
+                      />
+                    </div>
+        ))
+        }
       </div>
     </div>
   </div>)

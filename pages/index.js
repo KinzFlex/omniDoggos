@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useContext } from "react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import { Banner, CreatorCard, NFTCard, SearchBar } from "../components";
+//import { } from "../components";
 
 import images from "../assets";
 import { makeid } from "../utils/makeId";

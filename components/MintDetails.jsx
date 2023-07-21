@@ -24,7 +24,7 @@ const MintDetails = ({ minted, mintRate }) => (
         </div>
         <div className="mb-4">
           <dt className="text-gray-200 font-medium inline-block w-24 white-bg rounded-lg p-2 text-center">
-            Minted:
+            Next Mint ID:
           </dt>
           <dd className="text-gray-100 inline-block gray-bg rounded-lg p-2 text-center">
             {minted}/2

@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
 import { useStore } from "../hooks/Hook";
+import axios from 'axios';
+
+const covalentApi = axios.create({
+  baseURL: 'https://api.covalenthq.com/v1',
+});
 const CHAIN_ID = require("../constants/chainIds.json")
 
 import { MintAddressEth, MintAddressABIArb, MintAddressABIEth, MintAddressArb, MintAddressOp, MintAddressABIOp, MintAddressABIBsc, MintAddressBsc } from "./constants";
@@ -21,12 +26,32 @@ const fetchContract = async (signerOrProvider, networkId) => {
   }
 }
 
+
+const fetchNFTs = async (address, network) => {
+  try {
+    const data = [];
+    let headers = new Headers();
+    headers.set('Authorization', "Bearer cqt_rQpGTx8gD8HBMbf4PTmGVWtCbdT9")
+
+    await fetch(`https://api.covalenthq.com/v1/${network}/address/${address}/balances_v2/nft=true/`, {method: 'GET', headers: headers})
+      .then((resp) => resp.json())
+      .then((data) => console.log(data));
+    console.log(data)
+    return data;
+  } catch (error) {
+    console.error('Error fetching NFTs:', error);
+    return [];
+  }
+}
+
 export const NFTContext = React.createContext();
 
 export function NFTProvider({ children }) {
   const [currentAccount, setCurrentAccount] = useState("");
   const [currentContract, setContract] = useState("");
   const [currentNetwork, setNetwork] = useState(0);
+
+
   const dispatch = useStore()[1];
   const Web3 = require("web3");
 
@@ -51,17 +76,33 @@ export function NFTProvider({ children }) {
   };
 
   const connectWallet = async () => {
-    try {
-      if (!window.ethereum) return alert("Please install Metamask");
-      const accounts = await ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      setCurrentAccount(accounts[0]);
-    } catch (error) {
-      reportError(error);
-    }
+    if (!window.ethereum) return alert('Please install MetaMask.');
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    setCurrentAccount(accounts[0]);
+    window.location.reload();
   };
 
+  const getContract = async () => {
+    try {
+      if (!window.ethereum) return alert("Please install Metamask");
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(connection);
+      const signer = provider.getSigner();
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const networkId = await web3.eth.net.getId();
+      const contract = await fetchContract(signer, networkId);
+      setContract(contract);
+      console.log(currentContract);
+      return contract;
+    } catch (error) {
+      reportError('Error connecting to wallet or accessing network.');
+      console.error(error);
+    }
+  };
 
   const getNetworkID = async () => {
     try {
@@ -74,7 +115,6 @@ export function NFTProvider({ children }) {
 
         // Get the current network ID
         const networkId = await web3.eth.net.getId();
-        console.log(networkId)
 
         setNetwork(networkId);
       } else {
@@ -85,6 +125,8 @@ export function NFTProvider({ children }) {
       console.error(error);
     }
   };
+
+
 
   const payToMint = async () => {
     try {
@@ -103,7 +145,7 @@ export function NFTProvider({ children }) {
 
       const totalAmountToPay = mintRate * amtToMint;
 
-      let nftTxn = await contract.safeMint( currentAccount, 1);
+      let nftTxn = await contract.safeMint( currentAccount );
       await nftTxn.wait();
       setShowLoadingAnimation(false), setShowConfirmationMintedNFT(true);
 
@@ -116,7 +158,7 @@ export function NFTProvider({ children }) {
     }
   };
 
-  const onftSend = async () => {
+  const onftSend = async (tokenId_, networkId_) => {
     try {
       setShowLoadingAnimation(true);
       if (!window.ethereum) return alert("Please install Metamask");
@@ -128,11 +170,13 @@ export function NFTProvider({ children }) {
       const contract = await fetchContract(signer, currentNetwork);
       const owner = currentAccount;
       const toAddress = owner;
-      const tokenId = 1;
-      console.log(toAddress)
+      const tokenId = tokenId_;
 
       // get remote chain id
-      const remoteChainId = CHAIN_ID["goerli"];
+      const remoteChainId = networkId_;
+
+      console.log(tokenId)
+      console.log(remoteChainId)
 
       // quote fee with default adapterParams
       const adapterParams = ethers.utils.solidityPack(["uint16", "uint256"], [1, 200000]) // default adapterParams example
@@ -162,6 +206,24 @@ export function NFTProvider({ children }) {
     }
   };
 
+  const getNFTsOfOwnerByNetwork = async (network) => {
+    try {
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(connection);
+      const signer = provider.getSigner();
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      //const nfts = await fetchNFTs(currentAccount, network);
+      console.log('NFTs:', nfts);
+      return nfts;
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
+
+
   const getAmtMinted = async () => {
     try {
       if (!window.ethereum) return alert("Please install Metamask");
@@ -169,9 +231,13 @@ export function NFTProvider({ children }) {
       const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
-      const contract = await fetchContract(signer, currentNetwork);
-      const amtMinted = await contract.getMintedTknsAmt();
-      return amtMinted;
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const networkId = await web3.eth.net.getId();
+      const contract = await fetchContract(signer, networkId);
+      const minted = await contract.nextMintId();
+      console.log(minted.toString());
+      return minted.toString();
     } catch (error) {
       reportError(error);
     }
@@ -184,9 +250,11 @@ export function NFTProvider({ children }) {
       const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
-      const contract = fetchContract(signer, currentNetwork);
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const networkId = await web3.eth.net.getId();
+      const contract = await fetchContract(signer, networkId);
       const mintRate = await contract.getMintRate();
-
       return ethers.utils.formatEther(mintRate.toString());
     } catch (error) {
       reportError(error);
@@ -199,50 +267,55 @@ export function NFTProvider({ children }) {
       const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
-      const contract = fetchContract(signer, currentNetwork);
-      //console.log(currentAccount);
-      if (!currentAccount) {
-        connectWallet();
-      }
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const networkId = await web3.eth.net.getId();
+      const contract = await fetchContract(signer, networkId);
+      await isWalletConnected();
+      console.log(contract)
       const tokens = await contract.balanceOf(currentAccount);
-
-      //console.log(tokens);
+      console.log(tokens)
       return tokens.toString();
     } catch (error) {
       reportError(error);
     }
   };
 
-  const getNewMintedTokenOfOwner = async () => {
+
+  const getMintedTokenOfOwner = async () => {
     try {
       const web3Modal = new Web3Modal();
       const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
-      const contract = await fetchContract(signer, currentNetwork);
-      //console.log(currentAccount);
-      if (!currentAccount) {
-        connectWallet();
-      }
-      const tokens = await contract.balanceOf(currentAccount);
-      return tokens;
+      const web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const networkId = await web3.eth.net.getId();
+      const contract = await fetchContract(signer, networkId);
+      await isWalletConnected();
+      console.log(currentAccount.toString())
+      const tokenIds = await contract.getTokenIdsOfOwner(currentAccount.toString());
+
+      return tokenIds;
     } catch (error) {
       reportError(error);
     }
   };
 
-  const getUri = async (tokenId) => {
+
+  const getTokenId = async (tokenId) => {
     try {
       if (!window.ethereum) return alert("Please install Metamask");
       const web3Modal = new Web3Modal();
       const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
       const signer = provider.getSigner();
-
-      const contract = fetchContract(signer, currentNetwork);
+      const contract = await fetchContract(signer, currentNetwork);
       const uri = await contract.tokenURI(tokenId);
-      //console.log(uri);
-      return uri;
+      const response = await fetch(uri);
+      const json = await response.json();
+      const id = json.tokenId;
+      return id;
     } catch (error) {
       reportError(error);
     }
@@ -257,18 +330,42 @@ export function NFTProvider({ children }) {
       const signer = provider.getSigner();
 
       const contract = await fetchContract(signer, currentNetwork);
-      console.log(tokenId);
-      const uri = await contract.getURIPNG(tokenId);
-      console.log(uri)
-      return uri;
+      const uri = await contract.tokenURI(tokenId);
+      const response = await fetch(uri);
+      const json = await response.json();
+      const image = json.image;
+      return image;
     } catch (error) {
       reportError(error);
     }
   };
 
+  
+  const getListOfNFTsWithOwners = async () => {
+    try {
+      if (!window.ethereum) return alert("Please install Metamask");
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(connection);
+      const signer = provider.getSigner();
+
+      const contract = await fetchContract(signer, currentNetwork);
+      const listOfOwners = await contract.getListOfNFTsWithOwners();
+      console.log(listOfOwners)
+      return listOfOwners;
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
+
+ 
+
   useEffect(() => {
     isWalletConnected().then(() => console.log("Blockchain Loaded"));
     getNetworkID();
+    getContract();
+    
   }, []);
 
   const reportError = (error) => {
@@ -279,20 +376,21 @@ export function NFTProvider({ children }) {
   return (
     <NFTContext.Provider
       value={{
-        connectWallet,
         isWalletConnected,
         payToMint,
         setCurrentAccount,
-        getUri,
-        getMintRate,
         getAmtMinted,
         getTokensOfOwner,
-        getNewMintedTokenOfOwner,
         currentAccount,
-        getUriImage,
-        getNetworkID,
+        currentContract,
         currentNetwork,
-        onftSend
+        getNetworkID,
+        onftSend,
+        getMintRate,
+        getContract,
+        getMintedTokenOfOwner,
+        getUriImage,
+        getTokenId
       }}
     >
       {children}

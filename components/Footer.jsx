@@ -29,7 +29,7 @@ const Footer = () => {
         <div className="flexStart flex-1 flex-col">
           <div className="flexCenter cursor-pointer">
             <Image
-              src={images.SQ}
+              src={images.OD_logo}
               objectFit="contain"
               width={64}
               height={64}

@@ -3,7 +3,7 @@ import Image from "next/image";
 import {
      useState, useMemo, useCallback, useContext,
    } from 'react';
-   import Logogif from "../assets/SqueezeLogoAE.gif";
+//import Logogif from "../assets/SqueezeLogoAE.gif";
 
 
  const Loading = () => {
@@ -24,13 +24,13 @@ import {
        >
          <div className="flex flex-row justify-center items-center">
            <div className="lds-dual-ring scale-50" />
-           <Image
+           {/* <Image
           src={Logogif}
           height={400}
           width={400}
           alt={`A cute gif!`}
           unoptimized={true}
-        />
+        /> */}
          </div>
        </div>
      </div>
